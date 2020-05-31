@@ -27,10 +27,16 @@ DIR = os.path.dirname(os.path.abspath(__file__))
 with open(user_config_dir("borgmacator.json"), "r") as f:
     CONFIG = json.load(f)
 
+terminal = sh.Command(CONFIG["terminal"]["path"]).bake(*CONFIG["terminal"]["args"], **CONFIG["terminal"]["kwargs"])
+
+
+def get_icon_path(color="white"):
+    return os.path.join(DIR, "img", "borgmatic-%s.svg" % color)
+
 
 class Borgmacator(object):
     def __init__(self):
-        self.indicator = appindicator.Indicator.new(APPINDICATOR_ID, os.path.join(DIR, "img", "borgmatic-lightgreen.svg"), appindicator.IndicatorCategory.SYSTEM_SERVICES)
+        self.indicator = appindicator.Indicator.new(APPINDICATOR_ID, get_icon_path("lightgreen"), appindicator.IndicatorCategory.SYSTEM_SERVICES)
         self.indicator.set_status(appindicator.IndicatorStatus.ACTIVE)
         self.indicator.set_label("", "0!")
         self.menu = gtk.Menu()
@@ -74,7 +80,7 @@ class Borgmacator(object):
         self.menu.show_all()
         self.indicator.set_menu(self.menu)
 
-        self.notification = notify.Notification.new("<b>Borgmatic</b>", "", "drive-harddisk-symbolic")
+        # self.notification = notify.Notification.new("<b>Borgmatic</b>", "", "drive-harddisk-symbolic")
 
         self.borgmatic_unit = Unit(b'borgmatic.service')
         self.checks = []
@@ -84,13 +90,13 @@ class Borgmacator(object):
         self.update_now = Event()
 
     def show_log(self, source):
-        sh.gnome_terminal("--", "/usr/bin/journalctl", "-fet", "borgmatic")
+        terminal("journalctl", "-fet", "borgmatic")
 
     def show_status(self, source):
-        sh.gnome_terminal("--", "/usr/bin/systemctl", "status", "borgmatic.service")
+        terminal("systemctl", "status", "borgmatic.service")
 
     def start_service(self, source):
-        sh.gnome_terminal("--", "/usr/bin/systemctl", "start", "borgmatic.service")
+        terminal("systemctl", "start", "borgmatic.service", "--no-block")
 
     def goto_healthchecks(self, source):
         gtk.show_uri(None, "https://healthchecks.io/", gdk.CURRENT_TIME)
@@ -102,19 +108,20 @@ class Borgmacator(object):
             # self.borgmatic_unit.Unit.ConditionTimestamp
             for cond_type, trig_cond, reversed_cond, cond_value, cond_status in conds:
                 if cond_status < 1:
-                    self.indicator.set_icon(os.path.join(DIR, "img", "borgmatic-yellow.svg"))
+                    self.indicator.set_icon(get_icon_path("yellow"))
+                    break
             else:
-                self.indicator.set_icon(os.path.join(DIR, "img", "borgmatic-white.svg"))
+                self.indicator.set_icon(get_icon_path("white"))
         elif state == b"failed":
-            self.indicator.set_icon(os.path.join(DIR, "img", "borgmatic-red.svg"))
+            self.indicator.set_icon(get_icon_path("red"))
         else:
             proc = self.borgmatic_unit.Service.GetProcesses()
             for service, pid, cmd in proc:
                 if cmd.startswith(b"/usr/bin/sleep"):
-                    self.indicator.set_icon(os.path.join(DIR, "img", "borgmatic-lightgreen.svg"))
+                    self.indicator.set_icon(get_icon_path("lightgreen"))
                     break
             else:
-                self.indicator.set_icon(os.path.join(DIR, "img", "borgmatic-green.svg"))
+                self.indicator.set_icon(get_icon_path("green"))
 
         stati = Counter()
         infos = []
@@ -131,7 +138,7 @@ class Borgmacator(object):
         else:
             self.indicator.set_label("", "0!")
 
-        stati_list = []
+        # stati_list = []
         # if stati["up"]:
         #     stati_list.append("%s" % stati["up"])
         # if stati["started"]:

@@ -17,7 +17,12 @@ Name=Borgmacator
     config = user_config_dir("borgmacator.json")
     if not os.path.exists(config):
         with open(config, "w") as f:
-            json.dump({"healthchecks": {"api_key": "TODO", "filter": []}, "log_lines": 10, "update_interval": 15}, f)
+            json.dump({
+                "healthchecks": {"api_key": "TODO", "filter": []},
+                "terminal": {"path": "gnome-terminal", "args": ["--"], "kwargs": {}},
+                "log_lines": 10,
+                "update_interval": 15
+            }, f)
 
 
 def restart():
