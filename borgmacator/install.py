@@ -6,7 +6,7 @@ from appdirs import user_config_dir
 
 
 def install():
-    with open(os.path.join(user_config_dir("autostart"), "borgmactor.desktop"), "w") as f:
+    with open(os.path.join(user_config_dir("autostart"), "borgmacator.desktop"), "w") as f:
         f.write("""[Desktop Entry]
 Type=Application
 Exec=%s
