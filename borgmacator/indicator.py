@@ -1,3 +1,4 @@
+import contextlib
 import datetime
 import json
 import os
@@ -159,9 +160,12 @@ class Borgmacator(object):
     def auto_update(self):
         self.running.wait()
         while self.running.is_set():
-            self.borgmatic_unit.load()
-            self.checks = requests.get("https://healthchecks.io/api/v1/checks/", headers={"X-Api-Key": CONFIG["healthchecks"]["api_key"]}).json()["checks"]
-            self.journal = sh.journalctl(unit="borgmatic.service", lines=CONFIG["log_lines"], quiet=True, output="cat")
+            with contextlib.suppress(Exception):
+                self.borgmatic_unit.load()
+            with contextlib.suppress(Exception):
+                self.checks = requests.get("https://healthchecks.io/api/v1/checks/", headers={"X-Api-Key": CONFIG["healthchecks"]["api_key"]}).json()["checks"]
+            with contextlib.suppress(Exception):
+                self.journal = sh.journalctl(unit="borgmatic.service", lines=CONFIG["log_lines"], quiet=True, output="cat")
             GLib.idle_add(self.update_status)
             self.update_now.clear()
             self.update_now.wait(CONFIG["update_interval"])
